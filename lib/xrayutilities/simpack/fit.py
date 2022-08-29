@@ -274,7 +274,7 @@ class FitModel(object):
             try:
                 self.fitplot.plt.sca(self.fitplot.ax)
             except ValueError:
-                self.fitplot.plot_init(x, data, weights, method='leastsq', initmodel, mask,
+                self.fitplot.plot_init(x, data, weights, method, initmodel, mask,
                                        self.verbose)
             fittedmodel = self.eval(res.params, x=x, **kwargs)
             self.fitplot.addfullmodelline(x, fittedmodel)
