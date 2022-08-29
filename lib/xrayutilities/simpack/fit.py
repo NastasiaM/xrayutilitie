@@ -100,7 +100,7 @@ class FitModel(object):
         self.func = namespace['func']
         self.emetricfunc = numpy.log10 if self.elog else lambda x: x
 
-        def _residual(params, data, weights, **kwargs):
+        def _residual(params, data, weights, method, **kwargs):
             """
             Return the residual. This is a (simplified, only real values)
             reimplementation of the lmfit.Model._residual function which adds
@@ -147,7 +147,7 @@ class FitModel(object):
         self.xmin = xmin
         self.xmax = xmax
 
-    def fit(self, data, params, x, weights=None, fit_kws=None, **kwargs):
+    def fit(self, data, params, x, weights=None,  method='leastsq', fit_kws=None, **kwargs):
         """
         wrapper around lmfit.Model.fit which enables plotting during the
         fitting
@@ -183,7 +183,7 @@ class FitModel(object):
                     self.plt = plt
                     self.plot = f
 
-            def plot_init(self, x, data, weights, model, mask, verbose):
+            def plot_init(self, x, data, weights, method, model, mask, verbose):
                 if not self.plot:
                     return
                 self.plt.ion()
@@ -254,7 +254,7 @@ class FitModel(object):
         # create initial plot
         self.fitplot = FitPlot(self.plot, self.elog)
         initmodel = self.eval(params, x=x, **kwargs)
-        self.fitplot.plot_init(x, data, weights, initmodel, mask, self.verbose)
+        self.fitplot.plot_init(x, data, weights, method, initmodel, mask, self.verbose)
         self.fitplot.showplot()
 
         # create callback function
@@ -267,14 +267,14 @@ class FitModel(object):
 
         # perform fitting
         res = self.lmm.fit(data[mask], params, x=x[mask], weights=mweights,
-                           fit_kws=fit_kws, iter_cb=cb_func, **kwargs)
+                           fit_kws=fit_kws, iter_cb=cb_func, method='leastsq', **kwargs)
 
         # final update of plot
         if self.fitplot.plot:
             try:
                 self.fitplot.plt.sca(self.fitplot.ax)
             except ValueError:
-                self.fitplot.plot_init(x, data, weights, initmodel, mask,
+                self.fitplot.plot_init(x, data, weights, method='leastsq', initmodel, mask,
                                        self.verbose)
             fittedmodel = self.eval(res.params, x=x, **kwargs)
             self.fitplot.addfullmodelline(x, fittedmodel)
