@@ -18,20 +18,17 @@
 import warnings
 
 import numpy
-
-from .. import config, utilities
-from ..exception import InputError
-from . import models
-
+import lmfit 
+#from .. import config, utilities
+#from ..exception import InputError
+from xrayutilities.simpack import models
 
 class FitModel(object):
     """
     Wrapper for the lmfit Model class working for instances of LayerModel
-
     Typically this means that after initialization of `FitModel` you want to
     use make_params to get a `lmfit.Parameters` list which one customizes for
     fitting.
-
     Later on you can call `fit` and `eval` methods with those parameter list.
     """
     def __init__(self, lmodel, verbose=False, plot=False, elog=True, **kwargs):
@@ -40,7 +37,6 @@ class FitModel(object):
         and generates an according lmfit.Model internally for the given
         pre-configured LayerModel, or subclasses thereof which includes models
         for reflectivity, kinematic and dynamic diffraction.
-
         Parameters
         ----------
         lmodel :    LayerModel
@@ -62,7 +58,7 @@ class FitModel(object):
         self.verbose = verbose
         self.plot = plot
         self.elog = elog
-        lmfit = utilities.import_lmfit('XU.simpack')
+        #lmfit = utilities.import_lmfit('XU.simpack')
 
         assert isinstance(lmodel, models.LayerModel)
         self.lmodel = lmodel
@@ -100,12 +96,11 @@ class FitModel(object):
         self.func = namespace['func']
         self.emetricfunc = numpy.log10 if self.elog else lambda x: x
 
-        def _residual(params, data, weights, method, **kwargs):
+        def _residual(params, data, weights, **kwargs):
             """
             Return the residual. This is a (simplified, only real values)
             reimplementation of the lmfit.Model._residual function which adds
             the possibility of a logarithmic error metric.
-
             Default residual: (data-model)*weights.
             """
             scale = self.emetricfunc
@@ -133,7 +128,6 @@ class FitModel(object):
         set fit limits. If mask is given it must have the same size as the
         `data` and `x` variables given to fit. If mask is None it will be
         generated from xmin and xmax.
-
         Parameters
         ----------
         xmin :  float, optional
@@ -147,11 +141,10 @@ class FitModel(object):
         self.xmin = xmin
         self.xmax = xmax
 
-    def fit(self, data, params, x, weights=None,  method='leastsq', fit_kws=None, **kwargs):
+    def fit(self, data, params, x, weights=None,  method='basinhopping', fit_kws=None, **kwargs):
         """
         wrapper around lmfit.Model.fit which enables plotting during the
         fitting
-
         Parameters
         ----------
         data :      ndarray
@@ -167,7 +160,6 @@ class FitModel(object):
             Options to pass to the minimizer being used
         kwargs :    dict, optional
             keyword arguments which are passed to lmfit.Model.fit
-
         Returns
         -------
         lmfit.ModelResult
@@ -267,7 +259,7 @@ class FitModel(object):
 
         # perform fitting
         res = self.lmm.fit(data[mask], params, x=x[mask], weights=mweights,
-                           fit_kws=fit_kws, iter_cb=cb_func, method='leastsq', **kwargs)
+                           fit_kws=fit_kws, iter_cb=cb_func, method=method, **kwargs)
 
         # final update of plot
         if self.fitplot.plot:
